@@ -4,24 +4,23 @@
 Сравнение инвентаризации и результатов OSV Scanner до/после обновления ОС.
 """
 
-from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Set
 
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def package_map_from_task4(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def package_map_from_task4(payload: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     return {str(pkg.get("name")): pkg for pkg in payload.get("packages", []) if pkg.get("name")}
 
 
-def package_map_from_cyclonedx(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    result: dict[str, dict[str, Any]] = {}
+def package_map_from_cyclonedx(payload: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    result: Dict[str, Dict[str, Any]] = {}
     for component in payload.get("components", []) or []:
         name = component.get("name")
         if name:
@@ -29,7 +28,7 @@ def package_map_from_cyclonedx(payload: dict[str, Any]) -> dict[str, dict[str, A
     return result
 
 
-def compare_package_sets(before: dict[str, dict[str, Any]], after: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def compare_package_sets(before: Dict[str, Dict[str, Any]], after: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     before_names = set(before)
     after_names = set(after)
     common = before_names & after_names
@@ -89,7 +88,7 @@ def collect_vulnerability_ids(payload: Any) -> set[str]:
     return ids
 
 
-def summarize_osv(before_payload: Any, after_payload: Any) -> dict[str, Any]:
+def summarize_osv(before_payload: Any, after_payload: Any) -> Dict[str, Any]:
     before_ids = collect_vulnerability_ids(before_payload)
     after_ids = collect_vulnerability_ids(after_payload)
     return {
@@ -103,7 +102,7 @@ def summarize_osv(before_payload: Any, after_payload: Any) -> dict[str, Any]:
     }
 
 
-def compare_task4_and_sbom(task4_payload: dict[str, Any], sbom_payload: dict[str, Any]) -> dict[str, Any]:
+def compare_task4_and_sbom(task4_payload: Dict[str, Any], sbom_payload: Dict[str, Any]) -> Dict[str, Any]:
     task4_packages = package_map_from_task4(task4_payload)
     sbom_packages = package_map_from_cyclonedx(sbom_payload)
     task4_names = set(task4_packages)
@@ -119,7 +118,7 @@ def compare_task4_and_sbom(task4_payload: dict[str, Any], sbom_payload: dict[str
     }
 
 
-def make_markdown(summary: dict[str, Any]) -> str:
+def make_markdown(summary: Dict[str, Any]) -> str:
     pkg = summary["task4_before_after"]
     sbom = summary["sbom_before_after"]
     osv = summary["osv_before_after"]

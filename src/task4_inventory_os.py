@@ -11,7 +11,6 @@
 Дополнительно скрипт умеет формировать минимальный CycloneDX SBOM для задания 5.
 """
 
-from __future__ import annotations
 
 import argparse
 import json
@@ -22,18 +21,18 @@ import subprocess
 from datetime import datetime, timezone
 from uuid import uuid4
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any, Dict, List, Tuple
 from urllib.parse import quote
 
 
-def run_command(command: list[str]) -> str:
-    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+def run_command(command: List[str]) -> str:
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, check=True)
     return result.stdout
 
 
-def read_os_release() -> dict[str, str]:
+def read_os_release() -> Dict[str, str]:
     path = Path("/etc/os-release")
-    data: dict[str, str] = {}
+    data: Dict[str, str] = {}
     if not path.exists():
         return data
 
@@ -46,7 +45,7 @@ def read_os_release() -> dict[str, str]:
     return data
 
 
-def get_os_info() -> dict[str, str]:
+def get_os_info() -> Dict[str, str]:
     os_release = read_os_release()
     name = os_release.get("NAME") or platform.system()
     version = os_release.get("VERSION") or os_release.get("VERSION_ID") or platform.release()
@@ -76,17 +75,17 @@ def first_sentence(text: str) -> str:
     return match.group(1) if match else text
 
 
-def collect_rpm_packages() -> list[dict[str, object]]:
+def collect_rpm_packages() -> List[Dict[str, object]]:
     query_format = "%{NAME}\t%{VERSION}-%{RELEASE}\t%{ARCH}\t%{SIZE}\t%{SUMMARY}\n"
     output = run_command(["rpm", "-qa", f"--queryformat={query_format}"])
-    packages: list[dict[str, object]] = []
+    packages: List[Dict[str, object]] = []
 
     for line in output.splitlines():
         parts = line.split("\t", 4)
         if len(parts) < 5:
             continue
         name, version, arch, size, summary = parts
-        item: dict[str, object] = {
+        item: Dict[str, object] = {
             "name": name,
             "version": version,
             "arch": arch,
@@ -100,17 +99,17 @@ def collect_rpm_packages() -> list[dict[str, object]]:
     return sorted(packages, key=lambda x: str(x["name"]))
 
 
-def collect_dpkg_packages() -> list[dict[str, object]]:
+def collect_dpkg_packages() -> List[Dict[str, object]]:
     fmt = "${binary:Package}\t${Version}\t${Architecture}\t${Installed-Size}\t${binary:Summary}\n"
     output = run_command(["dpkg-query", "-W", f"-f={fmt}"])
-    packages: list[dict[str, object]] = []
+    packages: List[Dict[str, object]] = []
 
     for line in output.splitlines():
         parts = line.split("\t", 4)
         if len(parts) < 5:
             continue
         name, version, arch, installed_size_kb, summary = parts
-        item: dict[str, object] = {
+        item: Dict[str, object] = {
             "name": name,
             "version": version,
             "arch": arch,
@@ -124,7 +123,7 @@ def collect_dpkg_packages() -> list[dict[str, object]]:
     return sorted(packages, key=lambda x: str(x["name"]))
 
 
-def collect_packages() -> tuple[list[dict[str, object]], str]:
+def collect_packages() -> Tuple[List[Dict[str, object]], str]:
     if shutil.which("rpm"):
         return collect_rpm_packages(), "rpm"
     if shutil.which("dpkg-query"):
@@ -132,7 +131,7 @@ def collect_packages() -> tuple[list[dict[str, object]], str]:
     raise RuntimeError("Не найден поддерживаемый пакетный менеджер: rpm или dpkg-query")
 
 
-def build_purl(os_info: dict[str, str], package: dict[str, object], package_manager: str) -> str:
+def build_purl(os_info: Dict[str, str], package: Dict[str, object], package_manager: str) -> str:
     name = quote(str(package["name"]), safe="")
     version = quote(str(package["version"]), safe="")
     arch = quote(str(package.get("arch", "")), safe="")
@@ -146,7 +145,7 @@ def build_purl(os_info: dict[str, str], package: dict[str, object], package_mana
     return f"pkg:generic/{name}@{version}?arch={arch}"
 
 
-def build_cyclonedx(os_info: dict[str, str], packages: list[dict[str, object]], package_manager: str) -> dict[str, object]:
+def build_cyclonedx(os_info: Dict[str, str], packages: List[Dict[str, object]], package_manager: str) -> Dict[str, object]:
     components = []
     for package in packages:
         purl = build_purl(os_info, package, package_manager)
