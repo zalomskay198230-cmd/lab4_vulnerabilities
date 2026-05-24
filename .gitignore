@@ -1,0 +1,19 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# External source code and generated lab results
+/data/django/
+/results/*
+!/results/.gitkeep
+
+# Logs
+*.log
