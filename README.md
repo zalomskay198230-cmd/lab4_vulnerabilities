@@ -16,7 +16,6 @@ requirements.txt
 .gitignore
 ```
 
-Папка `results/` добавлена в `.gitignore`. Итоговые JSON/CSV/MD-файлы лучше отправлять архивом вместе с отчётом, а не выгружать в GitHub.
 
 ## Подготовка на Windows
 
@@ -90,11 +89,6 @@ sudo yum makecache
 sudo yum update -y
 ```
 
-Если преподаватель требует именно `dnf`, то на современных RPM-дистрибутивах команда будет:
-
-```bash
-sudo dnf update -y
-```
 
 ### После обновления
 
@@ -122,34 +116,3 @@ python3 src/task5_compare_osv.py \
   --output-md results/result_task_5_analysis.md
 ```
 
-## Коммиты с подписью
-
-```powershell
-git init
-git add .
-git commit -S -m "Добавлены скрипты для лабораторной работы 3"
-```
-
-Перед сдачей проверьте, что `results/` не попал в репозиторий:
-
-```powershell
-git status --ignored
-```
-
-## Что отправлять преподавателю
-
-1. Ссылку на GitHub-репозиторий с кодом и verified-коммитами.
-2. Архив с отчётом и итоговыми файлами:
-   - `result_task_1.json`
-   - `result_task_2.json`
-   - `result_task_3.csv` или `result_task_3.md`
-   - `result_task_4.json`
-   - `result_task_4_before.json`
-   - `result_task_4_after.json`
-   - `os_inventory_before.cdx.json`
-   - `os_inventory_after.cdx.json`
-   - `osv_before.json`
-   - `osv_after.json`
-   - `result_task_5_analysis.json`
-   - `result_task_5_analysis.md`
-   - отчёт `.docx`
